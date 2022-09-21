@@ -33,6 +33,9 @@ import androidx.work.WorkerParameters
 class RefreshMainDataWork(context: Context, params: WorkerParameters, private val network: MainNetwork) :
         CoroutineWorker(context, params) {
 
+    val database = getDatabase(applicationContext)
+    val repository = TitleRepository(network, database.titleDao)
+
     /**
      * Refresh the title from the network using [TitleRepository]
      *
@@ -41,7 +44,12 @@ class RefreshMainDataWork(context: Context, params: WorkerParameters, private va
      * start just enough to run this [Worker].
      */
     override suspend fun doWork(): Result {
-        return Result.success()         // TODO: Use coroutines from WorkManager
+        try{
+            repository.refreshTitle()
+            return Result.success()
+        }catch (cause:Throwable){
+            return Result.failure()
+        }
     }
 
     class Factory(val network: MainNetwork = getNetworkService()) : WorkerFactory() {
